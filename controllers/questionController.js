@@ -18,7 +18,7 @@ exports.addQuestionsToSession = async (req, res) => {
     }
 
     // Create new questions
-    const newQuestions = await Question.insertMany(questions.map(q => ({ session: sessionId, questions: q.question, answer: q.answer })));
+    const newQuestions = await Question.insertMany(questions.map(q => ({ session: sessionId, question: q.question, answer: q.answer })));
 
     // Update the session with the new questions IDs
     session.questions.push(...newQuestions.map(q => q._id));
