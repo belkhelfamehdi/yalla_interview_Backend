@@ -53,17 +53,6 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Add JSON parsing error handling
-app.use((error, req, res, next) => {
-    if (error instanceof SyntaxError && error.status === 400 && 'body' in error) {
-        return res.status(400).json({
-            success: false,
-            message: 'Invalid JSON format'
-        });
-    }
-    next(error);
-});
-
 // Security middlewares
 app.use(xssProtection);
 app.use(noSqlInjectionProtection);
