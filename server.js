@@ -24,37 +24,62 @@ const app = express();
 // Connect to database
 connectDB();
 
+// Request logging middleware
+app.use((req, res, next) => {
+    console.log(`📥 ${req.method} ${req.path} from ${req.headers.origin || 'no-origin'}`);
+    next();
+});
+
 // Security headers
 app.use(securityHeaders);
 
-// CORS configuration - SECURE
+// CORS configuration - SECURE with debugging
 const allowedOrigins = process.env.NODE_ENV === 'production' 
     ? [
         process.env.FRONTEND_URL,
         'https://yalla-interview.mehdibelkhelfa.com',
         'https://www.yalla-interview.mehdibelkhelfa.com'
-      ]
+      ].filter(Boolean) // Remove undefined values
     : [
         "http://localhost:3000", 
         "http://127.0.0.1:3000",
         "http://localhost:3001"
       ];
 
+console.log('🔧 CORS Configuration:');
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('FRONTEND_URL:', process.env.FRONTEND_URL);
+console.log('Allowed origins:', allowedOrigins);
+
 app.use(cors({
     origin: function (origin, callback) {
-        // Allow requests with no origin (mobile apps, Postman, etc.)
-        if (!origin) return callback(null, true);
+        console.log('🌐 CORS request from origin:', origin);
         
+        // Allow requests with no origin (mobile apps, Postman, etc.)
+        if (!origin) {
+            console.log('✅ Allowing request with no origin');
+            return callback(null, true);
+        }
+        
+        // Check if origin is in allowed list
         if (allowedOrigins.indexOf(origin) !== -1) {
+            console.log('✅ Origin allowed:', origin);
             callback(null, true);
         } else {
-            console.log('CORS blocked origin:', origin);
-            console.log('Allowed origins:', allowedOrigins);
-            callback(new Error('Not allowed by CORS'));
+            console.log('❌ CORS blocked origin:', origin);
+            console.log('📋 Allowed origins:', allowedOrigins);
+            
+            // Temporary: Allow all origins if we can't determine the correct one
+            if (process.env.NODE_ENV !== 'production' || allowedOrigins.length === 0) {
+                console.log('⚠️ Fallback: Allowing origin due to configuration issue');
+                callback(null, true);
+            } else {
+                callback(new Error('Not allowed by CORS'));
+            }
         }
     },
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
     credentials: true,
     optionsSuccessStatus: 200,
     preflightContinue: false
@@ -86,16 +111,31 @@ app.get("/api/health", (req, res) => {
 
 // Debug endpoint for CORS testing
 app.get("/api/cors-test", (req, res) => {
-    res.status(200).json({
+    const corsInfo = {
         success: true,
-        message: "CORS is working",
-        origin: req.headers.origin,
-        allowedOrigins: process.env.NODE_ENV === 'production' 
-            ? [process.env.FRONTEND_URL, 'https://yalla-interview.mehdibelkhelfa.com']
-            : ["http://localhost:3000", "http://127.0.0.1:3000"],
-        environment: process.env.NODE_ENV,
-        frontendUrl: process.env.FRONTEND_URL
-    });
+        message: "CORS debug information",
+        server: {
+            nodeEnv: process.env.NODE_ENV,
+            frontendUrl: process.env.FRONTEND_URL,
+            port: process.env.PORT,
+            timestamp: new Date().toISOString()
+        },
+        request: {
+            origin: req.headers.origin,
+            userAgent: req.headers['user-agent'],
+            referer: req.headers.referer,
+            host: req.headers.host
+        },
+        cors: {
+            allowedOrigins: process.env.NODE_ENV === 'production' 
+                ? [process.env.FRONTEND_URL, 'https://yalla-interview.mehdibelkhelfa.com'].filter(Boolean)
+                : ["http://localhost:3000", "http://127.0.0.1:3000"],
+            isProductionMode: process.env.NODE_ENV === 'production'
+        }
+    };
+    
+    console.log('🔍 CORS Test Request:', corsInfo);
+    res.status(200).json(corsInfo);
 });
 
 // Serve uploaded files securely
