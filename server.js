@@ -40,14 +40,7 @@ const allowedOrigins = process.env.NODE_ENV === 'production'
         "http://localhost:3000",
     ];
 
-app.use(cors({
-    origin: allowedOrigins,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
-    credentials: true,
-    optionsSuccessStatus: 200,
-    preflightContinue: false
-}));
+app.use(cors());
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
