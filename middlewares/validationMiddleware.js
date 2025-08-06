@@ -1,47 +1,97 @@
-const Joi = require('joi');
+const { z } = require('zod');
 const { validationResult, body } = require('express-validator');
 
-// Schémas de validation Joi
-const userRegistrationSchema = Joi.object({
-    name: Joi.string().min(2).max(50).required().trim(),
-    email: Joi.string().email().required().lowercase().trim(),
-    password: Joi.string()
-        .min(8)
-        .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])/)
-        .required()
-        .messages({
-            'string.pattern.base': 'Password must contain at least one lowercase letter, one uppercase letter, one number and one special character'
-        }),
-    profileImageUrl: Joi.string().uri().optional().allow(null, '')
+// Schémas de validation Zod
+const userRegistrationSchema = z.object({
+    name: z.string()
+        .min(2, 'Name must be at least 2 characters')
+        .max(50, 'Name must be less than 50 characters')
+        .trim(),
+    email: z.string()
+        .email('Invalid email format')
+        .toLowerCase()
+        .trim(),
+    password: z.string()
+        .min(8, 'Password must be at least 8 characters')
+        .regex(
+            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])/,
+            'Password must contain at least one lowercase letter, one uppercase letter, one number and one special character'
+        ),
+    profileImageUrl: z.union([
+        z.string().url(),
+        z.string().length(0),
+        z.null(),
+        z.undefined()
+    ]).optional()
 });
 
-const userLoginSchema = Joi.object({
-    email: Joi.string().email().required().lowercase().trim(),
-    password: Joi.string().required()
+const userLoginSchema = z.object({
+    email: z.string()
+        .email('Invalid email format')
+        .toLowerCase()
+        .trim(),
+    password: z.string()
+        .min(1, 'Password is required')
 });
 
-const sessionCreationSchema = Joi.object({
-    role: Joi.string().min(2).max(100).required().trim(),
-    experience: Joi.string().min(1).max(50).required().trim(),
-    topicToFocus: Joi.string().min(2).max(200).required().trim(),
-    description: Joi.string().max(1000).optional().allow('').trim(),
-    questions: Joi.array().items(
-        Joi.object({
-            question: Joi.string().min(5).max(1000).required().trim(),
-            answer: Joi.string().min(5).max(5000).required().trim()
+const sessionCreationSchema = z.object({
+    role: z.string()
+        .min(2, 'Role must be at least 2 characters')
+        .max(100, 'Role must be less than 100 characters')
+        .trim(),
+    experience: z.string()
+        .min(1, 'Experience is required')
+        .max(50, 'Experience must be less than 50 characters')
+        .trim(),
+    topicToFocus: z.string()
+        .min(2, 'Topic must be at least 2 characters')
+        .max(200, 'Topic must be less than 200 characters')
+        .trim(),
+    description: z.string()
+        .max(1000, 'Description must be less than 1000 characters')
+        .trim()
+        .optional()
+        .or(z.literal('')),
+    questions: z.array(
+        z.object({
+            question: z.string()
+                .min(5, 'Question must be at least 5 characters')
+                .max(1000, 'Question must be less than 1000 characters')
+                .trim(),
+            answer: z.string()
+                .min(5, 'Answer must be at least 5 characters')
+                .max(5000, 'Answer must be less than 5000 characters')
+                .trim()
         })
-    ).min(1).max(50).required()
+    )
+    .min(1, 'At least one question is required')
+    .max(50, 'Maximum 50 questions allowed')
 });
 
-const aiGenerationSchema = Joi.object({
-    role: Joi.string().min(2).max(100).required().trim(),
-    experience: Joi.string().min(1).max(50).required().trim(),
-    topicToFocus: Joi.string().min(2).max(200).required().trim(),
-    numberOfQuestions: Joi.number().integer().min(1).max(20).required()
+const aiGenerationSchema = z.object({
+    role: z.string()
+        .min(2, 'Role must be at least 2 characters')
+        .max(100, 'Role must be less than 100 characters')
+        .trim(),
+    experience: z.string()
+        .min(1, 'Experience is required')
+        .max(50, 'Experience must be less than 50 characters')
+        .trim(),
+    topicToFocus: z.string()
+        .min(2, 'Topic must be at least 2 characters')
+        .max(200, 'Topic must be less than 200 characters')
+        .trim(),
+    numberOfQuestions: z.number()
+        .int('Number of questions must be an integer')
+        .min(1, 'At least 1 question required')
+        .max(20, 'Maximum 20 questions allowed')
 });
 
-const conceptExplanationSchema = Joi.object({
-    question: Joi.string().min(5).max(1000).required().trim()
+const conceptExplanationSchema = z.object({
+    question: z.string()
+        .min(5, 'Question must be at least 5 characters')
+        .max(1000, 'Question must be less than 1000 characters')
+        .trim()
 });
 
 // Middleware de validation générique
@@ -55,23 +105,33 @@ const validateSchema = (schema) => {
             });
         }
         
-        const { error, value } = schema.validate(req.body, { 
-            abortEarly: false,
-            stripUnknown: true
-        });
-        
-        if (error) {
-            const errorMessages = error.details.map(detail => detail.message);
+        try {
+            // Parse and validate with Zod
+            const validatedData = schema.parse(req.body);
+            
+            // Replace req.body with validated and cleaned data
+            req.body = validatedData;
+            next();
+        } catch (error) {
+            // Handle Zod validation errors
+            if (error instanceof z.ZodError) {
+                const errorMessages = error.errors.map(err => 
+                    `${err.path.join('.')}: ${err.message}`
+                );
+                
+                return res.status(400).json({
+                    success: false,
+                    message: 'Validation error',
+                    errors: errorMessages
+                });
+            }
+            
+            // Handle other errors
             return res.status(400).json({
                 success: false,
-                message: 'Validation error',
-                errors: errorMessages
+                message: 'Validation failed'
             });
         }
-        
-        // Remplacer req.body par les données validées et nettoyées
-        req.body = value;
-        next();
     };
 };
 
