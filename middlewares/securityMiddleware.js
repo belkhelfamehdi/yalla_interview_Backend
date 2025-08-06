@@ -100,5 +100,7 @@ module.exports = {
     authLimiter,
     aiLimiter,
     uploadLimiter,
-    errorHandler
+    errorHandler,
+    helmet,
+    mongoSanitize
 };

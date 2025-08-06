@@ -13,7 +13,9 @@ const aiRoutes = require("./routes/aiRoutes");
 // Import security middlewares
 const {
     generalLimiter,
-    errorHandler
+    errorHandler,
+    helmet,
+    mongoSanitize
 } = require("./middlewares/securityMiddleware");
 
 const app = express();
@@ -33,6 +35,10 @@ app.use(cors({
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Security middlewares
+app.use(helmet());
+app.use(mongoSanitize());
 
 // General rate limiting
 app.use(generalLimiter);
