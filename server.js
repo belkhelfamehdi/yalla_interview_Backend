@@ -33,7 +33,7 @@ app.use((req, res, next) => {
 // Security headers
 app.use(securityHeaders);
 
-// CORS configuration - SECURE with debugging
+// CORS configuration
 const allowedOrigins = process.env.NODE_ENV === 'production' 
     ? [
         process.env.FRONTEND_URL,
@@ -107,116 +107,6 @@ app.get("/api/health", (req, res) => {
         message: "Server is running",
         timestamp: new Date().toISOString()
     });
-});
-
-// Debug endpoint for CORS testing
-app.get("/api/cors-test", (req, res) => {
-    const corsInfo = {
-        success: true,
-        message: "CORS debug information",
-        server: {
-            nodeEnv: process.env.NODE_ENV,
-            frontendUrl: process.env.FRONTEND_URL,
-            port: process.env.PORT,
-            timestamp: new Date().toISOString()
-        },
-        request: {
-            origin: req.headers.origin,
-            userAgent: req.headers['user-agent'],
-            referer: req.headers.referer,
-            host: req.headers.host
-        },
-        cors: {
-            allowedOrigins: process.env.NODE_ENV === 'production' 
-                ? [process.env.FRONTEND_URL, 'https://yalla-interview.mehdibelkhelfa.com'].filter(Boolean)
-                : ["http://localhost:3000", "http://127.0.0.1:3000"],
-            isProductionMode: process.env.NODE_ENV === 'production'
-        }
-    };
-    
-    console.log('🔍 CORS Test Request:', corsInfo);
-    res.status(200).json(corsInfo);
-});
-
-// Debug endpoint for login testing
-app.post("/api/debug-login", (req, res) => {
-    console.log('🧪 Debug login request:');
-    console.log('Headers:', req.headers);
-    console.log('Body:', req.body);
-    console.log('Content-Type:', req.headers['content-type']);
-    
-    res.status(200).json({
-        success: true,
-        message: "Login debug info",
-        received: {
-            body: req.body,
-            headers: {
-                'content-type': req.headers['content-type'],
-                'origin': req.headers.origin,
-                'user-agent': req.headers['user-agent']
-            }
-        },
-        validation: {
-            hasEmail: !!req.body.email,
-            hasPassword: !!req.body.password,
-            emailValue: req.body.email,
-            passwordLength: req.body.password ? req.body.password.length : 0
-        }
-    });
-});
-
-// Test endpoint without any middleware
-app.post("/api/test-simple", (req, res) => {
-    console.log('🔥 Simple test - Raw body:', req.body);
-    res.status(200).json({
-        success: true,
-        message: "Simple test endpoint works",
-        receivedBody: req.body,
-        bodyType: typeof req.body
-    });
-});
-
-// Create test user endpoint
-app.post("/api/create-test-user", async (req, res) => {
-    try {
-        const User = require('./models/User');
-        const bcrypt = require('bcrypt');
-        
-        // Delete existing test user
-        await User.deleteOne({ email: 'test@yalla.com' });
-        
-        // Create new test user
-        const salt = await bcrypt.genSalt(12);
-        const hashedPassword = await bcrypt.hash('password123', salt);
-        
-        const testUser = await User.create({
-            name: 'Test User',
-            email: 'test@yalla.com',
-            password: hashedPassword
-        });
-        
-        res.status(201).json({
-            success: true,
-            message: 'Test user created successfully',
-            credentials: {
-                email: 'test@yalla.com',
-                password: 'password123'
-            },
-            user: {
-                _id: testUser._id,
-                name: testUser.name,
-                email: testUser.email
-            }
-        });
-        
-    } catch (error) {
-        console.error('Error creating test user:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error creating test user',
-            error: error.message
-        });
-    }
 });
 
 // Serve uploaded files securely
