@@ -165,6 +165,60 @@ app.post("/api/debug-login", (req, res) => {
     });
 });
 
+// Test endpoint without any middleware
+app.post("/api/test-simple", (req, res) => {
+    console.log('🔥 Simple test - Raw body:', req.body);
+    res.status(200).json({
+        success: true,
+        message: "Simple test endpoint works",
+        receivedBody: req.body,
+        bodyType: typeof req.body
+    });
+});
+
+// Create test user endpoint
+app.post("/api/create-test-user", async (req, res) => {
+    try {
+        const User = require('./models/User');
+        const bcrypt = require('bcrypt');
+        
+        // Delete existing test user
+        await User.deleteOne({ email: 'test@yalla.com' });
+        
+        // Create new test user
+        const salt = await bcrypt.genSalt(12);
+        const hashedPassword = await bcrypt.hash('password123', salt);
+        
+        const testUser = await User.create({
+            name: 'Test User',
+            email: 'test@yalla.com',
+            password: hashedPassword
+        });
+        
+        res.status(201).json({
+            success: true,
+            message: 'Test user created successfully',
+            credentials: {
+                email: 'test@yalla.com',
+                password: 'password123'
+            },
+            user: {
+                _id: testUser._id,
+                name: testUser.name,
+                email: testUser.email
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error creating test user:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error creating test user',
+            error: error.message
+        });
+    }
+});
+
 // Serve uploaded files securely
 app.use("/uploads", express.static(path.join(__dirname, "uploads"), {
     maxAge: '1d',
