@@ -50,43 +50,6 @@ const uploadLimiter = createRateLimit(
     'Too many upload attempts, please try again later.'
 );
 
-// Security headers middleware
-const securityHeaders = helmet({
-    contentSecurityPolicy: {
-        directives: {
-            defaultSrc: ["'self'"],
-            styleSrc: ["'self'", "'unsafe-inline'"],
-            scriptSrc: ["'self'"],
-            imgSrc: ["'self'", "data:", "https:"],
-        },
-    },
-    hsts: {
-        maxAge: 31536000,
-        includeSubDomains: true,
-        preload: true
-    }
-});
-
-// XSS Protection middleware
-const xssProtection = (req, res, next) => {
-    if (req.body) {
-        for (let key in req.body) {
-            if (typeof req.body[key] === 'string') {
-                req.body[key] = xss(req.body[key]);
-            }
-        }
-    }
-    next();
-};
-
-// MongoDB injection protection
-const noSqlInjectionProtection = (req, res, next) => {
-    req.body = mongoSanitize(req.body);
-    req.query = mongoSanitize(req.query);
-    req.params = mongoSanitize(req.params);
-    next();
-};
-
 // Error handling middleware
 const errorHandler = (err, req, res, next) => {
     console.error('Error:', err);
@@ -138,8 +101,5 @@ module.exports = {
     authLimiter,
     aiLimiter,
     uploadLimiter,
-    securityHeaders,
-    xssProtection,
-    noSqlInjectionProtection,
     errorHandler
 };

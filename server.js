@@ -13,9 +13,6 @@ const aiRoutes = require("./routes/aiRoutes");
 // Import security middlewares
 const {
     generalLimiter,
-    securityHeaders,
-    xssProtection,
-    noSqlInjectionProtection,
     errorHandler
 } = require("./middlewares/securityMiddleware");
 
@@ -27,28 +24,15 @@ app.set('trust proxy', 1);
 // Connect to database
 connectDB();
 
-// Security headers
-app.use(securityHeaders);
-
-// CORS configuration
-const allowedOrigins = process.env.NODE_ENV === 'production'
-    ? [
-        process.env.FRONTEND_URL,
-        'https://yalla-interview.mehdibelkhelfa.com',
-    ].filter(Boolean) // Remove undefined values
-    : [
-        "http://localhost:3000",
-    ];
-
-app.use(cors());
+app.use(cors({
+    origin: process.env.FRONTEND_URL,
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true
+}));
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Security middlewares
-app.use(xssProtection);
-app.use(noSqlInjectionProtection);
 
 // General rate limiting
 app.use(generalLimiter);
