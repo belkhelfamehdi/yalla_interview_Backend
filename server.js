@@ -11,12 +11,12 @@ const questionRoutes = require("./routes/questionRoutes");
 const aiRoutes = require("./routes/aiRoutes");
 
 // Import security middlewares
-const { 
-    generalLimiter, 
-    securityHeaders, 
-    xssProtection, 
-    noSqlInjectionProtection, 
-    errorHandler 
+const {
+    generalLimiter,
+    securityHeaders,
+    xssProtection,
+    noSqlInjectionProtection,
+    errorHandler
 } = require("./middlewares/securityMiddleware");
 
 const app = express();
@@ -29,8 +29,8 @@ app.use(securityHeaders);
 
 // CORS configuration - SECURE
 app.use(cors({
-    origin: process.env.NODE_ENV === 'production' 
-        ? process.env.FRONTEND_URL 
+    origin: process.env.NODE_ENV === 'production'
+        ? process.env.FRONTEND_URL
         : ["http://localhost:3000", "http://127.0.0.1:3000"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
