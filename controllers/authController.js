@@ -19,9 +19,9 @@ const registerUser = async (req, res) => {
         // Check if user already exists
         const userExists = await User.findOne({ email });
         if (userExists) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 success: false,
-                message: 'User already exists' 
+                message: 'User already exists'
             });
         }
 
@@ -51,9 +51,9 @@ const registerUser = async (req, res) => {
         });
     } catch (error) {
         console.error('Registration error:', error);
-        res.status(500).json({ 
+        res.status(500).json({
             success: false,
-            message: 'Server error during registration' 
+            message: 'Server error during registration'
         });
     }
 };
@@ -67,7 +67,7 @@ const loginUser = async (req, res) => {
 
         // Validation des champs requis
         if (!email || !password) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 success: false,
                 message: 'Email and password are required'
             });
@@ -76,18 +76,18 @@ const loginUser = async (req, res) => {
         // Check if user exists
         const user = await User.findOne({ email });
         if (!user) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 success: false,
-                message: 'Invalid credentials' 
+                message: 'Invalid credentials'
             });
         }
 
         // Check if password is correct
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 success: false,
-                message: 'Invalid credentials' 
+                message: 'Invalid credentials'
             });
         }
 
@@ -105,9 +105,9 @@ const loginUser = async (req, res) => {
         });
     } catch (error) {
         console.error('Login error:', error);
-        res.status(500).json({ 
+        res.status(500).json({
             success: false,
-            message: 'Server error during login' 
+            message: 'Server error during login'
         });
     }
 };
@@ -119,9 +119,9 @@ const getUserProfile = async (req, res) => {
     try {
         const user = await User.findById(req.user._id).select('-password');
         if (!user) {
-            return res.status(404).json({ 
+            return res.status(404).json({
                 success: false,
-                message: 'User not found' 
+                message: 'User not found'
             });
         }
 
@@ -132,9 +132,9 @@ const getUserProfile = async (req, res) => {
         });
     } catch (error) {
         console.error('Profile fetch error:', error);
-        res.status(500).json({ 
+        res.status(500).json({
             success: false,
-            message: 'Server error while fetching profile' 
+            message: 'Server error while fetching profile'
         });
     }
 };
