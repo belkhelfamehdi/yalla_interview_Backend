@@ -47,7 +47,18 @@ const conceptExplanationSchema = Joi.object({
 // Middleware de validation générique
 const validateSchema = (schema) => {
     return (req, res, next) => {
+        console.log('🔍 Validation input type:', typeof req.body);
         console.log('🔍 Validation input:', req.body);
+        
+        // Ensure req.body is an object
+        if (typeof req.body !== 'object' || req.body === null) {
+            console.log('❌ Invalid request body type:', typeof req.body);
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid request format',
+                receivedType: typeof req.body
+            });
+        }
         
         const { error, value } = schema.validate(req.body, { 
             abortEarly: false,
