@@ -6,10 +6,18 @@ const protect = async (req, res, next) => {
     let token;
 
     // Check if token is in the authorization header
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    if (req.headers.authorization?.startsWith('Bearer ')) {
         try {
             // Get token from header
             token = req.headers.authorization.split(' ')[1];
+
+            // Verify token exists after split
+            if (!token) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Invalid token format'
+                });
+            }
 
             // Verify token
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
