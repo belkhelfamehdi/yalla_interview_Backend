@@ -28,17 +28,37 @@ connectDB();
 app.use(securityHeaders);
 
 // CORS configuration - SECURE
-app.use(cors({
-    origin: process.env.NODE_ENV === 'production'
-        ? process.env.FRONTEND_URL
-        : ["http://localhost:3000", "http://127.0.0.1:3000"],
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
-    optionsSuccessStatus: 200
-}));
+const allowedOrigins = process.env.NODE_ENV === 'production' 
+    ? [
+        process.env.FRONTEND_URL,
+        'https://yalla-interview.mehdibelkhelfa.com',
+        'https://www.yalla-interview.mehdibelkhelfa.com'
+      ]
+    : [
+        "http://localhost:3000", 
+        "http://127.0.0.1:3000",
+        "http://localhost:3001"
+      ];
 
-// Body parsing middleware
+app.use(cors({
+    origin: function (origin, callback) {
+        // Allow requests with no origin (mobile apps, Postman, etc.)
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            console.log('CORS blocked origin:', origin);
+            console.log('Allowed origins:', allowedOrigins);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    credentials: true,
+    optionsSuccessStatus: 200,
+    preflightContinue: false
+}));// Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -61,6 +81,20 @@ app.get("/api/health", (req, res) => {
         success: true,
         message: "Server is running",
         timestamp: new Date().toISOString()
+    });
+});
+
+// Debug endpoint for CORS testing
+app.get("/api/cors-test", (req, res) => {
+    res.status(200).json({
+        success: true,
+        message: "CORS is working",
+        origin: req.headers.origin,
+        allowedOrigins: process.env.NODE_ENV === 'production' 
+            ? [process.env.FRONTEND_URL, 'https://yalla-interview.mehdibelkhelfa.com']
+            : ["http://localhost:3000", "http://127.0.0.1:3000"],
+        environment: process.env.NODE_ENV,
+        frontendUrl: process.env.FRONTEND_URL
     });
 });
 
