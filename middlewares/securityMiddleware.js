@@ -15,7 +15,6 @@ const createRateLimit = (windowMs, max, message) => {
         standardHeaders: true,
         legacyHeaders: false,
         handler: (req, res) => {
-            console.log(`🚨 Rate limit exceeded for IP: ${req.ip} on ${req.path}`);
             res.status(429).json({
                 success: false,
                 message: 'Too many requests, please try again later.',
