@@ -63,11 +63,30 @@ const registerUser = async (req, res) => {
 // @access Public
 const loginUser = async (req, res) => {
     try {
+        console.log('🔐 Login attempt:', {
+            body: req.body,
+            headers: {
+                'content-type': req.headers['content-type'],
+                'origin': req.headers.origin
+            }
+        });
+
         const { email, password } = req.body;
+
+        // Validation des champs requis
+        if (!email || !password) {
+            console.log('❌ Missing email or password');
+            return res.status(400).json({ 
+                success: false,
+                message: 'Email and password are required',
+                received: { email: !!email, password: !!password }
+            });
+        }
 
         // Check if user exists
         const user = await User.findOne({ email });
         if (!user) {
+            console.log('❌ User not found:', email);
             return res.status(400).json({ 
                 success: false,
                 message: 'Invalid credentials' 
@@ -77,11 +96,14 @@ const loginUser = async (req, res) => {
         // Check if password is correct
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
+            console.log('❌ Invalid password for user:', email);
             return res.status(400).json({ 
                 success: false,
                 message: 'Invalid credentials' 
             });
         }
+
+        console.log('✅ Login successful for user:', email);
 
         // Return user data with token
         res.status(200).json({
@@ -96,7 +118,7 @@ const loginUser = async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Login error:', error);
+        console.error('❌ Login error:', error);
         res.status(500).json({ 
             success: false,
             message: 'Server error during login' 

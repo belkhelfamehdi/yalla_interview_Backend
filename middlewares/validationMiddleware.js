@@ -47,6 +47,8 @@ const conceptExplanationSchema = Joi.object({
 // Middleware de validation générique
 const validateSchema = (schema) => {
     return (req, res, next) => {
+        console.log('🔍 Validation input:', req.body);
+        
         const { error, value } = schema.validate(req.body, { 
             abortEarly: false,
             stripUnknown: true
@@ -54,6 +56,7 @@ const validateSchema = (schema) => {
         
         if (error) {
             const errorMessages = error.details.map(detail => detail.message);
+            console.log('❌ Validation failed:', errorMessages);
             return res.status(400).json({
                 success: false,
                 message: 'Validation error',
@@ -61,6 +64,7 @@ const validateSchema = (schema) => {
             });
         }
         
+        console.log('✅ Validation passed:', value);
         // Remplacer req.body par les données validées et nettoyées
         req.body = value;
         next();

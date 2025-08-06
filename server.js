@@ -138,6 +138,33 @@ app.get("/api/cors-test", (req, res) => {
     res.status(200).json(corsInfo);
 });
 
+// Debug endpoint for login testing
+app.post("/api/debug-login", (req, res) => {
+    console.log('🧪 Debug login request:');
+    console.log('Headers:', req.headers);
+    console.log('Body:', req.body);
+    console.log('Content-Type:', req.headers['content-type']);
+    
+    res.status(200).json({
+        success: true,
+        message: "Login debug info",
+        received: {
+            body: req.body,
+            headers: {
+                'content-type': req.headers['content-type'],
+                'origin': req.headers.origin,
+                'user-agent': req.headers['user-agent']
+            }
+        },
+        validation: {
+            hasEmail: !!req.body.email,
+            hasPassword: !!req.body.password,
+            emailValue: req.body.email,
+            passwordLength: req.body.password ? req.body.password.length : 0
+        }
+    });
+});
+
 // Serve uploaded files securely
 app.use("/uploads", express.static(path.join(__dirname, "uploads"), {
     maxAge: '1d',
