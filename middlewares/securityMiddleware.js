@@ -15,9 +15,12 @@ const createRateLimit = (windowMs, max, message) => {
         standardHeaders: true,
         legacyHeaders: false,
         handler: (req, res) => {
+            console.log(`🚨 Rate limit exceeded for IP: ${req.ip} on ${req.path}`);
             res.status(429).json({
                 success: false,
-                message: 'Too many requests, please try again later.'
+                message: 'Too many requests, please try again later.',
+                retryAfter: Math.ceil(windowMs / 1000 / 60), // minutes
+                type: 'RATE_LIMIT_EXCEEDED'
             });
         }
     });
@@ -26,13 +29,13 @@ const createRateLimit = (windowMs, max, message) => {
 // Different rate limits for different endpoints
 const generalLimiter = createRateLimit(
     15 * 60 * 1000, // 15 minutes
-    100, // limit each IP to 100 requests per windowMs
+    process.env.NODE_ENV === 'production' ? 200 : 1000, // Higher limit in dev
     'Too many requests from this IP, please try again later.'
 );
 
 const authLimiter = createRateLimit(
     15 * 60 * 1000, // 15 minutes  
-    5, // limit each IP to 5 requests per windowMs
+    process.env.NODE_ENV === 'production' ? 25 : 100, // Higher limit in dev
     'Too many authentication attempts, please try again later.'
 );
 
