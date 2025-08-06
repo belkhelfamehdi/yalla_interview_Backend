@@ -1,4 +1,3 @@
-const { Type } = require('@google/genai');
 const mongoose = require('mongoose');
 
 const questionSchema = new mongoose.Schema({
