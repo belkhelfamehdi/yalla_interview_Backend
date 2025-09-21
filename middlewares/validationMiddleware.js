@@ -97,8 +97,11 @@ const conceptExplanationSchema = z.object({
 // Middleware de validation générique
 const validateSchema = (schema) => {
     return (req, res, next) => {
+        console.log('Validation middleware - Request body:', JSON.stringify(req.body, null, 2));
+        
         // Ensure req.body is an object
         if (typeof req.body !== 'object' || req.body === null) {
+            console.log('Validation failed: req.body is not an object');
             return res.status(400).json({
                 success: false,
                 message: 'Invalid request format'
@@ -113,11 +116,15 @@ const validateSchema = (schema) => {
             req.body = validatedData;
             next();
         } catch (error) {
+            console.log('Validation error details:', error);
+            
             // Handle Zod validation errors
             if (error instanceof z.ZodError) {
                 const errorMessages = error.errors.map(err => 
                     `${err.path.join('.')}: ${err.message}`
                 );
+                
+                console.log('Zod validation errors:', errorMessages);
                 
                 return res.status(400).json({
                     success: false,
