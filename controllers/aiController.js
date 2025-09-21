@@ -8,16 +8,24 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 // @access  Private
 const generateInterviewQuestions = async (req, res) => {
   try {
+    console.log('AI Controller: Generate questions request received');
+    console.log('Request body:', req.body);
+    
     const { role, experience, topicToFocus, numberOfQuestions } = req.body;
 
     const prompt = questionAnswerPrompt(role, experience, topicToFocus, numberOfQuestions);
+    
+    console.log('Generated prompt:', prompt);
 
     const response = await ai.models.generateContent({
       model: "gemini-2.0-flash",
       contents: prompt,
     });
 
+    console.log('AI Response received:', !!response?.text);
+
     if (!response?.text) {
+      console.log('No response text from AI service');
       return res.status(500).json({
         success: false,
         message: "Failed to generate response from AI service"
@@ -25,6 +33,7 @@ const generateInterviewQuestions = async (req, res) => {
     }
 
     let rawText = response.text;
+    console.log('Raw AI response:', rawText.substring(0, 200) + '...');
 
     // Clean and parse JSON response
     const cleanedText = rawText
@@ -35,8 +44,10 @@ const generateInterviewQuestions = async (req, res) => {
     let data;
     try {
       data = JSON.parse(cleanedText);
+      console.log('Parsed AI data:', data.length, 'questions');
     } catch (parseError) {
       console.error('JSON parse error:', parseError);
+      console.error('Cleaned text that failed to parse:', cleanedText);
       return res.status(500).json({
         success: false,
         message: "Invalid response format from AI service"
@@ -45,12 +56,14 @@ const generateInterviewQuestions = async (req, res) => {
 
     // Validate response structure
     if (!Array.isArray(data)) {
+      console.log('AI response is not an array:', typeof data);
       return res.status(500).json({
         success: false,
         message: "Invalid data structure from AI service"
       });
     }
 
+    console.log('AI Controller: Sending successful response');
     res.status(200).json({
       success: true,
       message: "Questions generated successfully",
